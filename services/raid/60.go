@@ -12,7 +12,7 @@ func build60(disksCount int, diskSize float64, dataCount int, dataSize float64) 
 		return nil, 0, errors.New("disks count must be even (minimum 8)")
 	}
 
-	dataSizePerDisk := dataSize / float64(disksCount)
+	dataSizePerDisk := dataSize / float64(disksCount-2*2) // two Hamming codes used twice per one data => 2 * 2
 	if dataSizePerDisk*float64(dataCount) > diskSize {
 		return nil, 0, fmt.Errorf("insufficient disk size, increase it by %f GB",
 			dataSizePerDisk*float64(dataCount)-diskSize)
@@ -37,18 +37,22 @@ func build60(disksCount int, diskSize float64, dataCount int, dataSize float64) 
 				}
 
 				var num string
+				var sizeGB float64
 				switch i {
 				case pPos:
 					num = "_p"
+					sizeGB = 0
 				case qPos:
 					num = "_q"
+					sizeGB = 0
 				default:
 					num = strconv.Itoa(lastID)
+					sizeGB = dataSizePerDisk
 					lastID++
 				}
 				disks[i].Fragments = append(disks[i].Fragments, DiskFragment{
 					Label:  fmt.Sprintf("%c%s", 'A'+j, num),
-					SizeGB: dataSizePerDisk,
+					SizeGB: sizeGB,
 				})
 			}
 		}
@@ -60,6 +64,11 @@ func build60(disksCount int, diskSize float64, dataCount int, dataSize float64) 
 	disks = append(disks, build6(count, 1, 1)...)
 	disks = append(disks, build6(count, 1+count, 1+count-2)...)
 
-	used := dataSizePerDisk * float64(dataCount) * float64(disksCount)
+	var used float64
+	for _, disk := range disks {
+		for _, fragment := range disk.Fragments {
+			used += fragment.SizeGB
+		}
+	}
 	return disks, Redundancy(disksCount, diskSize, used), nil
 }
