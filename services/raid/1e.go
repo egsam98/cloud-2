@@ -12,7 +12,7 @@ func build1E(disksCount int, diskSize float64, dataCount int, dataSize float64) 
 		return nil, 0, errors.New("minimum disks count must be 3")
 	}
 
-	partsCount := int(math.Round(float64(disksCount) / 2))
+	partsCount := int(math.Trunc(float64(disksCount) / 2))
 	dataSizePerDisk := dataSize / float64(partsCount)
 
 	disks := make([]Disk, disksCount)
